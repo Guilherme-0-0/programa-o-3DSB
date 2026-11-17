@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Qual o seu Time do Coração?</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #172033; }
+    main { max-width: 680px; margin: 32px auto; }
+    .card { padding: 24px; border-radius: 14px; background: #eaf3ff; border: 1px solid #b9d5f5; }
+    h1 { margin-top: 0; color: #174a82; }
+    label { display: block; margin: 18px 0 8px; font-weight: bold; }
+    select, button { font: inherit; padding: 10px 14px; border-radius: 6px; }
+    select { min-width: 240px; }
+    .actions { display: flex; gap: 10px; margin-top: 14px; }
+    button { cursor: pointer; border: 1px solid #174a82; background: #fff; }
+    #enviar { color: #fff; background: #1769aa; }
+    dialog { border: 0; border-radius: 12px; padding: 24px; box-shadow: 0 8px 30px #0003; }
+    dialog::backdrop { background: #10243b88; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card" aria-labelledby="titulo">
+      <h1 id="titulo">Qual o seu Time do Coração?</h1>
+      <label for="time">Escolha seu time:</label>
+      <select id="time">
+        <option value="Botafogo">Botafogo</option>
+        <option value="Flamengo">Flamengo</option>
+        <option value="Fluminense">Fluminense</option>
+        <option value="Vasco da Gama">Vasco da Gama</option>
+      </select>
+      <div class="actions">
+        <button type="button" id="enviar">Enviar</button>
+        <button type="button" id="cancelar">Cancelar</button>
+      </div>
+    </section>
+  </main>
+  <dialog id="dialogo" aria-labelledby="mensagem">
+    <p id="mensagem"></p>
+    <button type="button" id="fechar">Fechar</button>
+  </dialog>
+  <script>
+    const selecao = document.getElementById("time");
+    const dialogo = document.getElementById("dialogo");
+    const mensagem = document.getElementById("mensagem");
+    document.getElementById("enviar").addEventListener("click", () => {
+      mensagem.textContent = "Seu time do coração é " + selecao.value + ".";
+      dialogo.showModal();
+    });
+    document.getElementById("cancelar").addEventListener("click", () => {
+      selecao.selectedIndex = 0;
+      mensagem.textContent = "Seleção cancelada.";
+      dialogo.showModal();
+    });
+    document.getElementById("fechar").addEventListener("click", () => dialogo.close());
+    dialogo.addEventListener("click", evento => {
+      if (evento.target === dialogo) dialogo.close();
+    });
+  </script>
+</body>
+</html>
