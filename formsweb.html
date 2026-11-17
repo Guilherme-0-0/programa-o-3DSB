@@ -2,57 +2,128 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cadastro de Clientes</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    input, select, button { margin: 5px 0; display: block; width: 300px; }
-    #listBoxClientes { height: 100px; }
+    body { font-family: Arial, sans-serif; margin: 24px; color: #172033; }
+    main { max-width: 620px; margin: auto; }
+    input, select, button { box-sizing: border-box; margin: 6px 0; padding: 10px; width: 100%; }
+    select { min-height: 120px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .actions button { flex: 1 1 140px; cursor: pointer; }
+    #status { min-height: 1.5em; color: #176b3a; }
   </style>
 </head>
 <body>
-  <h2>Cadastro de Clientes</h2>
-
-  <label for="listBoxClientes">Clientes:</label>
-  <select id="listBoxClientes" size="5"></select>
-  <button onclick="buscarCliente()">Buscar Cliente</button>
-
-  <h3>Dados do Cliente</h3>
-  <input type="text" id="txtNome" placeholder="Nome">
-  <input type="text" id="txtEndereco" placeholder="Endereço">
-  <input type="text" id="txtTelefone" placeholder="Telefone">
-  <input type="email" id="txtEmail" placeholder="Email">
-
+  <main>
+    <h1>Cadastro de Clientes</h1>
+    <label for="listBoxClientes">Clientes cadastrados</label>
+    <select id="listBoxClientes" size="5" aria-label="Clientes cadastrados"></select>
+    <div class="actions">
+      <button type="button" id="btnBuscar">Buscar Cliente</button>
+      <button type="button" id="btnIncluir">Incluir Cliente</button>
+      <button type="button" id="btnAlterar">Alterar Cliente</button>
+    </div>
+    <h2>Dados do Cliente</h2>
+    <label for="txtNome">Nome</label><input type="text" id="txtNome" placeholder="Nome">
+    <label for="txtEndereco">Endereço</label><input type="text" id="txtEndereco" placeholder="Endereço">
+    <label for="txtTelefone">Telefone</label><input type="tel" id="txtTelefone" placeholder="Telefone">
+    <label for="txtEmail">E-mail</label><input type="email" id="txtEmail" placeholder="E-mail">
+    <p id="status" role="status" aria-live="polite"></p>
+  </main>
   <script>
-    // Simulação de banco de dados local
-    const clientes = [
+    const STORAGE_KEY = "clientes";
+    const clientesIniciais = [
       { id: 1, nome: "João Silva", endereco: "Rua A", telefone: "123456", email: "joao@gmail.com" },
       { id: 2, nome: "Maria Oliveira", endereco: "Rua B", telefone: "654321", email: "maria@gmail.com" }
     ];
-
-    // Salvar no localStorage
-    localStorage.setItem("clientes", JSON.stringify(clientes));
-
-    // Preencher lista de clientes
-    const listBox = document.getElementById("listBoxClientes");
-    const listaClientes = JSON.parse(localStorage.getItem("clientes"));
-    listaClientes.forEach(cliente => {
-      const option = document.createElement("option");
-      option.value = cliente.id;
-      option.textContent = `${cliente.id} - ${cliente.nome}`;
-      listBox.appendChild(option);
-    });
-
-    // Buscar cliente e preencher formulário
-    function buscarCliente() {
-      const selectedId = parseInt(listBox.value);
-      const cliente = listaClientes.find(c => c.id === selectedId);
-      if (cliente) {
-        document.getElementById("txtNome").value = cliente.nome;
-        document.getElementById("txtEndereco").value = cliente.endereco;
-        document.getElementById("txtTelefone").value = cliente.telefone;
-        document.getElementById("txtEmail").value = cliente.email;
-      }
+    let clientes;
+    try {
+      const salvos = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      clientes = Array.isArray(salvos) ? salvos : clientesIniciais;
+    } catch {
+      clientes = clientesIniciais;
     }
+    const listBox = document.getElementById("listBoxClientes");
+    const campos = {
+      nome: document.getElementById("txtNome"),
+      endereco: document.getElementById("txtEndereco"),
+      telefone: document.getElementById("txtTelefone"),
+      email: document.getElementById("txtEmail")
+    };
+    const status = document.getElementById("status");
+    let clienteEmEdicao = null;
+
+    function salvar() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(clientes));
+    }
+    function atualizarLista(idSelecionado = null) {
+      listBox.replaceChildren();
+      clientes.forEach(cliente => {
+        const option = document.createElement("option");
+        option.value = String(cliente.id);
+        option.textContent = String(cliente.id) + " - " + cliente.nome;
+        listBox.appendChild(option);
+      });
+      if (idSelecionado !== null) listBox.value = String(idSelecionado);
+    }
+    function limparCampos() {
+      Object.values(campos).forEach(campo => campo.value = "");
+      clienteEmEdicao = null;
+    }
+    function lerDados() {
+      const dados = Object.fromEntries(Object.entries(campos).map(([chave, campo]) => [chave, campo.value.trim()]));
+      if (Object.values(dados).some(valor => !valor)) {
+        status.textContent = "Preencha todos os campos antes de salvar.";
+        return null;
+      }
+      if (!campos.email.checkValidity()) {
+        status.textContent = "Informe um endereço de e-mail válido.";
+        campos.email.focus();
+        return null;
+      }
+      return dados;
+    }
+    function buscarCliente() {
+      const cliente = clientes.find(item => item.id === Number(listBox.value));
+      if (!cliente) {
+        status.textContent = "Selecione um cliente na lista.";
+        return;
+      }
+      Object.keys(campos).forEach(chave => campos[chave].value = cliente[chave]);
+      clienteEmEdicao = cliente.id;
+      status.textContent = "Dados do cliente carregados para edição.";
+    }
+    function incluirCliente() {
+      const dados = lerDados();
+      if (!dados) return;
+      const novoId = clientes.reduce((maior, item) => Math.max(maior, Number(item.id) || 0), 0) + 1;
+      clientes.push({ id: novoId, ...dados });
+      salvar();
+      atualizarLista(novoId);
+      limparCampos();
+      status.textContent = "Cliente incluído e salvo neste navegador.";
+    }
+    function alterarCliente() {
+      const id = clienteEmEdicao ?? Number(listBox.value);
+      const indice = clientes.findIndex(item => item.id === id);
+      if (indice < 0) {
+        status.textContent = "Selecione e busque um cliente antes de alterar.";
+        return;
+      }
+      const dados = lerDados();
+      if (!dados) return;
+      clientes[indice] = { ...clientes[indice], ...dados };
+      salvar();
+      atualizarLista(id);
+      limparCampos();
+      status.textContent = "Dados do cliente alterados e salvos neste navegador.";
+    }
+    document.getElementById("btnBuscar").addEventListener("click", buscarCliente);
+    document.getElementById("btnIncluir").addEventListener("click", incluirCliente);
+    document.getElementById("btnAlterar").addEventListener("click", alterarCliente);
+    if (localStorage.getItem(STORAGE_KEY) === null) salvar();
+    atualizarLista();
   </script>
 </body>
 </html>
