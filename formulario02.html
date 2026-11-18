@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><title>Qual é o seu time?</title>
+<style>body{font-family:Arial,sans-serif;margin:30px}label,select,button{display:block;margin:10px 0}button{padding:6px 14px}</style></head>
+<body><h1>Qual o seu Time do Coração?</h1><form id="formTime">
+<label for="time">Escolha seu time:</label><select id="time" name="time"><option value="">Selecione</option><option value="Corinthians">Corinthians</option><option value="Palmeiras">Palmeiras</option><option value="Santos">Santos</option><option value="São Paulo">São Paulo</option></select>
+<button type="button" onclick="enviarFormulario()">Confirmar</button><button type="button" onclick="cancelarFormulario()">Cancelar</button></form>
+<script>function enviarFormulario(){const select=document.getElementById('time');if(!select.value){alert('Selecione um time.');return}alert('Seu time é '+select.options[select.selectedIndex].value)}function cancelarFormulario(){document.getElementById('formTime').reset();alert('Seleção cancelada.')}
+</script></body></html>
