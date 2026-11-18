@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cadastro de clientes</title>
+<style>body{font-family:Arial,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem}label{display:block;margin:.7rem 0 .2rem}input,button{padding:.5rem}input{width:100%;box-sizing:border-box}li{cursor:pointer;padding:.4rem}li:hover{background:#eee}#busca{margin-top:1rem}</style>
+</head>
+<body>
+<h1>Cadastro de clientes</h1>
+<form id="formCliente">
+<label for="nome">Nome</label><input id="nome" required>
+<label for="email">E-mail</label><input id="email" type="email" required>
+<button type="submit">Incluir cliente</button>
+<button type="button" id="novo">Novo</button>
+</form>
+<h2>Buscar cliente</h2>
+<label for="busca">Digite o nome ou ID</label><input id="busca" placeholder="Nome ou ID">
+<ul id="lista"></ul>
+<button id="exportar" type="button">Baixar clientes.json</button>
+<script>
+class Cliente { constructor(nome,email,id=Date.now()){this.id=id;this.nome=nome;this.email=email;} toJSON(){return {id:this.id,nome:this.nome,email:this.email};} }
+let clientes=[]; // O navegador não pode gravar silenciosamente em arquivo local; o JSON é exportado pelo botão.
+function salvar_cliente(){localStorage.setItem("clientes",JSON.stringify(clientes.map(c=>c.toJSON())));listar_clientes();}
+function incluir_cliente(nome,email){const c=new Cliente(nome,email);clientes.push(c);salvar_cliente();return c;}
+function cadastrar_clientes(){const nome=document.querySelector("#nome").value.trim(), email=document.querySelector("#email").value.trim();if(nome&&email)incluir_cliente(nome,email);}
+function listar_clientes(filtro=""){const ul=document.querySelector("#lista");ul.replaceChildren();clientes.filter(c=>(c.nome+" "+c.id).toLowerCase().includes(filtro.toLowerCase())).forEach(c=>{const li=document.createElement("li");li.textContent=`#${c.id} — ${c.nome} (${c.email})`;li.onclick=()=>{document.querySelector("#nome").value=c.nome;document.querySelector("#email").value=c.email;};ul.append(li);});}
+function limpar_arquivo(){clientes=[];localStorage.removeItem("clientes");listar_clientes();}
+document.querySelector("#formCliente").addEventListener("submit",e=>{e.preventDefault();cadastrar_clientes();e.target.reset();});
+document.querySelector("#busca").addEventListener("input",e=>listar_clientes(e.target.value));
+document.querySelector("#novo").onclick=()=>document.querySelector("#formCliente").reset();
+document.querySelector("#exportar").onclick=()=>{const blob=new Blob([JSON.stringify(clientes.map(c=>c.toJSON()),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="clientes.json";a.click();URL.revokeObjectURL(a.href);};
+clientes=JSON.parse(localStorage.getItem("clientes")||"[]").map(x=>new Cliente(x.nome,x.email,x.id));limpar_arquivo();
+</script>
+</body>
+</html>
